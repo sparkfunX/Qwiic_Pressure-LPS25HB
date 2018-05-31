@@ -2,7 +2,7 @@
 
 LPS25HB.h
 
-This is a basic interface to the LPS25HB I2C absolute digital output barometer. The IC can be found in
+This is an interface to the LPS25HB I2C absolute digital output barometer. The IC can be found in
 the SparkFun Qwiic series of sensors
 
 Created: May 2018
@@ -17,9 +17,24 @@ Owen Lyke
 #define LPS25HB_H
 
 
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+
+#include <Wire.h>
+
+
 /////////////////////////////////////
 //				Defines
 /////////////////////////////////////
+
+// I2C addresses
+#define LPS25HB_I2C_ADDR_DEF 	0b1011101	// Address used by default, ADDR pin is pulled high
+#define LPS25HB_I2C_ADDR_ALT 	0b1011100	// Address used as alternate, when user bridges the ADR pads
+
+#define LPS25HB_DEVID			0xBD		// Factory set identifier
 
 // Register Configuration Options
 
@@ -111,8 +126,10 @@ typedef enum{
 	LPS25HB_REG_REF_P_XL = 0x08,
 	LPS25HB_REG_REF_P_L,
 	LPS25HB_REG_REF_P_H,
-	LPS25HB_REG_WHO_AM_I,
-	LPS25HB_REG_RES_CONF,
+
+	LPS25HB_REG_WHO_AM_I = 0x0F,
+
+	LPS25HB_REG_RES_CONF = 0x10,
 	// Reserved 0x11-0x1F
 	LPS25HB_REG_CTRL_REG1 = 0x20,
 	LPS25HB_REG_CTRL_REG2,
@@ -123,7 +140,7 @@ typedef enum{
 	// Reserved 0x26
 	LPS25HB_REG_STATUS_REG = 0x27,
 	LPS25HB_REG_PRESS_OUT_XL,
-	LPS25HB_REG_PRESSS_OUT_L,
+	LPS25HB_REG_PRESS_OUT_L,
 	LPS25HB_REG_PRESS_OUT_H,
 	LPS25HB_REG_TEMP_OUT_L,
 	LPS25HB_REG_TEMP_OUT_H,
@@ -136,12 +153,69 @@ typedef enum{
 	LPS25HB_REG_RPDS_L = 0x39
 }LPS25HB_RegistersTypeDef;
 
+
+typedef enum{
+	// General success/failure
+	LPS25HB_CODE_ERR = 0x00,
+	LPS25HB_CODE_NOM,
+
+	// Connection status
+	LPS25HB_CODE_DISCONNECTED,
+	LPS25HB_CODE_CONNECTED,
+
+	//
+	LPS25HB_CODE_RX_UNDERFLOW,
+
+	// 
+	LPS25_HB_CODE_WRONG_ID
+
+}LPS25HB_CodesTypeDef;
+
+
+
 class LPS25HB
 {
 public:
 
+	// Parameters
+	uint8_t 				sensor_address;	// Remembers the sensor address for the user. The best way to set this value is to call the begin funtion again
+	LPS25HB_CodesTypeDef 	lastCode;		// Holds the last code returned from operations
+
+	// Functions
+	LPS25HB( void );																							// Constructor
+	LPS25HB_CodesTypeDef begin(	TwoWire &wirePort = Wire, uint8_t address = LPS25HB_I2C_ADDR_DEF ); 			// Startup routine that uses the Wire port as the default
+
+	// Getters
+	LPS25HB_CodesTypeDef isConnected(); 	
+	uint8_t getID();
+	uint8_t getStatus();
+
+	int16_t		getTemperature_raw();
+	float		getTemperature_degC();
+
+	int32_t 	getPressure_raw();
+	float		getPressure_hPa();
+
+
+
+	// Setters
+	LPS25HB_CodesTypeDef setReferencePressure(uint32_t adc_val);
+	LPS25HB_CodesTypeDef setPressureThreshold(uint16_t adc_val);
+	LPS25HB_CodesTypeDef setTemperatureAverages(uint8_t avg_code);
+	LPS25HB_CodesTypeDef setPressureAverages(uint8_t avg_code);
+	LPS25HB_CodesTypeDef setOutputDataRate(uint8_t odr_code);
+	LPS25HB_CodesTypeDef setFIFOMode(uint8_t mode_code);
+	LPS25HB_CodesTypeDef setFIFOMeanNum(uint8_t mean_num);
+
+
+
+	// I2C Interface Basics
+	LPS25HB_CodesTypeDef read( uint8_t reg_adr, uint8_t * pdata, uint8_t size, uint8_t address = LPS25HB_I2C_ADDR_DEF);
+	LPS25HB_CodesTypeDef write( uint8_t reg_adr, uint8_t * pdata, uint8_t size, uint8_t address = LPS25HB_I2C_ADDR_DEF);
 
 private:
+
+	TwoWire *_i2cPort;			// Allows user to specify which TwoWire port to use for the connection
 
 };
 
