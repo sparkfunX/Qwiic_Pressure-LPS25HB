@@ -9,7 +9,7 @@ void setup() {
   Serial.println("Hello!");
 
   pressure_sensor.begin(Wire, LPS25HB_I2C_ADDR_DEF); // This illustrates the default values when using the Qwiic system with the LPS25HB right out of the box
-//  pressure_sensor.begin(Wire2, LPS25HB_I2C_ADDR_ALT); // This line illustrates how the beginfunction can be used to start the sensor on a different Wire port (if the master board supports it) and with the alternate address (allows up to two sensors on the same I2C lines)
+//  pressure_sensor.begin(Wire2, LPS25HB_I2C_ADDR_ALT); // This line illustrates how the begin function can be used to start the sensor on a different Wire port (if the master board supports it) and with the alternate address (allows up to two sensors on the same I2C lines by soldering the ADR jumper)
 }
 
 void loop() {
@@ -18,7 +18,7 @@ void loop() {
   {
     if(pressure_sensor.getStatus() == 0x00){pressure_sensor.begin();}                                 // If it is connected but not responding (for example after a hot-swap) then it may need to be re-initialized
     Serial.print("Connected. Sensor Status: "); Serial.print(pressure_sensor.getStatus(),HEX);        // Read the sensor status, the datasheet can explain what the various codes mean
-    Serial.print("Pressure in hPa: "); Serial.print(pressure_sensor.getPressure_hPa());               // Get the pressure reading in hPa as determined by dividing the number of ADC counts by 4096 (according to the datasheet)
+    Serial.print(", Pressure in hPa: "); Serial.print(pressure_sensor.getPressure_hPa());               // Get the pressure reading in hPa as determined by dividing the number of ADC counts by 4096 (according to the datasheet)
     Serial.print(", Temperature (degC): "); Serial.println(pressure_sensor.getTemperature_degC());    // Get the temperature in degrees C by dividing the ADC count by 480
   }
   else
